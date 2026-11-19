@@ -1,0 +1,3 @@
+# Delcom Blog - Backend (Golang Gin)
+go mod tidy && go run cmd/server/main.go  # :8081
+go test -v -cover ./internal/...

@@ -1,0 +1,385 @@
+package docs
+
+import "github.com/swaggo/swag"
+
+const docTemplate = `{
+ "swagger": "2.0",
+ "info": {
+  "title": "Delcom Blog API",
+  "description": "REST API Delcom Blog (ifs24008)",
+  "version": "1.0"
+ },
+ "basePath": "/",
+ "paths": {
+  "/api/public/categories": {
+   "get": {
+    "summary": "Daftar kategori",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/api/public/posts": {
+   "get": {
+    "summary": "Daftar artikel terbit (?q=, ?category=)",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/api/public/posts/{slug}": {
+   "get": {
+    "summary": "Detail artikel publik",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "parameters": [
+     {
+      "name": "slug",
+      "in": "path",
+      "required": true,
+      "type": "string"
+     }
+    ]
+   }
+  },
+  "/api/auth/register": {
+   "post": {
+    "summary": "Registrasi penulis",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/api/auth/login": {
+   "post": {
+    "summary": "Login, terbit JWT",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/api/auth/logout": {
+   "post": {
+    "summary": "Logout",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ]
+   }
+  },
+  "/api/auth/profile": {
+   "get": {
+    "summary": "Ambil profil",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ]
+   },
+   "put": {
+    "summary": "Ubah profil",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ]
+   }
+  },
+  "/api/posts": {
+   "get": {
+    "summary": "Artikel milik penulis",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ]
+   },
+   "post": {
+    "summary": "Buat artikel",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ]
+   }
+  },
+  "/api/posts/stats": {
+   "get": {
+    "summary": "Statistik penulis",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ]
+   }
+  },
+  "/api/posts/{id}": {
+   "get": {
+    "summary": "Detail artikel milik penulis",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "type": "string"
+     }
+    ]
+   },
+   "put": {
+    "summary": "Ubah artikel",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "type": "string"
+     }
+    ]
+   },
+   "delete": {
+    "summary": "Hapus artikel",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "type": "string"
+     }
+    ]
+   }
+  },
+  "/api/posts/{id}/toggle-publish": {
+   "patch": {
+    "summary": "Toggle Draf/Terbit",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "type": "string"
+     }
+    ]
+   }
+  },
+  "/api/posts/ai-generate": {
+   "post": {
+    "summary": "AI Blog Generator + Search Engine",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ]
+   }
+  },
+  "/api/admin/users": {
+   "get": {
+    "summary": "Admin: semua pengguna",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ]
+   }
+  },
+  "/api/admin/posts": {
+   "get": {
+    "summary": "Admin: semua artikel",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ]
+   }
+  },
+  "/api/admin/users/{id}/posts": {
+   "get": {
+    "summary": "Admin: artikel per pengguna",
+    "tags": [
+     "API"
+    ],
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    },
+    "security": [
+     {
+      "BearerAuth": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "type": "string"
+     }
+    ]
+   }
+  }
+ },
+ "securityDefinitions": {
+  "BearerAuth": {
+   "type": "apiKey",
+   "name": "Authorization",
+   "in": "header"
+  }
+ }
+}`
+
+var SwaggerInfo = &swag.Spec{Version: "1.0", BasePath: "/", Title: "Delcom Blog API",
+	Description: "REST API Delcom Blog", InfoInstanceName: "swagger", SwaggerTemplate: docTemplate,
+	LeftDelim: "{{", RightDelim: "}}"}
+
+func init() { swag.Register(SwaggerInfo.InstanceName(), SwaggerInfo) }
