@@ -36,6 +36,7 @@ type Post struct {
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
 	ReadingTime int        `gorm:"-" json:"reading_time"`
+	AuthorName  string     `gorm:"-" json:"author_name"`
 }
 
 func Connect(c *config.Config) (*gorm.DB, error) {

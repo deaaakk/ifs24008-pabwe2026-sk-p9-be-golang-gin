@@ -105,7 +105,9 @@ func (s *Service) Generate(q GenerateReq) (*Article, error) {
 	if err != nil {
 		return nil, err
 	}
-	txt = strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(strings.TrimSpace(txt), "```json"), "```"))
+	if i, j := strings.Index(txt, "{"), strings.LastIndex(txt, "}"); i >= 0 && j > i {
+		txt = txt[i : j+1]
+	}
 	var a Article
 	if err := json.Unmarshal([]byte(txt), &a); err != nil {
 		return nil, fmt.Errorf("format JSON AI tidak valid")
@@ -121,7 +123,7 @@ type Handler struct{ S *Service }
 
 func (h *Handler) Generate(c *gin.Context) {
 	var q GenerateReq
-	if c.ShouldBindJSON(&q) != nil {
+	if c.ShouldBindJSON(&q) != nil || strings.TrimSpace(q.Topic) == "" {
 		response.Fail(c, http.StatusBadRequest, "Topik wajib diisi")
 		return
 	}

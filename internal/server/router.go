@@ -38,7 +38,7 @@ func New(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	pub.GET("/posts/:slug", po.PublicDetail)
 
 	api.POST("/auth/register", au.Register)
-	api.POST("/auth/login", middleware.RateLimiter(30, time.Minute), au.Login)
+	api.POST("/auth/login", middleware.RateLimiter(100, time.Minute), au.Login)
 	sec := api.Group("", middleware.Auth(cfg.Key))
 	sec.POST("/auth/logout", au.Logout)
 	sec.GET("/auth/profile", au.Profile)
@@ -51,6 +51,7 @@ func New(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	w.POST("/ai-generate", a.Generate)
 	w.GET("/:id", po.Get)
 	w.PUT("/:id", po.Update)
+	w.PATCH("/:id", po.Update)
 	w.PATCH("/:id/toggle-publish", po.Toggle)
 	w.DELETE("/:id", po.Delete)
 

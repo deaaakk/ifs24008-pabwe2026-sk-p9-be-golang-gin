@@ -36,13 +36,15 @@ func Auth(key string) gin.HandlerFunc {
 			return
 		}
 		claims := jwt.MapClaims{}
-		tok, err := jwt.ParseWithClaims(t, claims, func(*jwt.Token) (any, error) { return []byte(key), nil })
-		if err != nil || !tok.Valid {
+		tok, err := jwt.ParseWithClaims(t, claims, func(*jwt.Token) (any, error) { return []byte(key), nil },
+			jwt.WithValidMethods([]string{"HS256"}))
+		sub, ok := claims["sub"].(float64)
+		if err != nil || !tok.Valid || !ok {
 			response.Fail(c, http.StatusUnauthorized, "Token tidak valid")
 			c.Abort()
 			return
 		}
-		c.Set("userID", uint(claims["sub"].(float64)))
+		c.Set("userID", uint(sub))
 		c.Set("role", claims["role"])
 		c.Next()
 	}

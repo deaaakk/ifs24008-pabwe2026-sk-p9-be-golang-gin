@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -56,10 +57,21 @@ func TestAPI(t *testing.T) {
 		return o["data"].(M)["token"].(string)
 	}
 	// auth
-	c, _ := call(r, "POST", "/api/auth/register", "", M{"username": "budi", "email": "b@x.id", "password": "rahasia"})
+	c, o := call(r, "POST", "/api/auth/register", "", M{"username": "budi", "email": "b@x.id", "password": "rahasia"})
 	eq(c, 201, "register")
+	if d, ok := o["data"].(M); !ok || d["token"] == nil || d["token"] == "" {
+		t.Fatal("register harus mengembalikan token")
+	}
 	c, _ = call(r, "POST", "/api/auth/register", "", M{"username": "budi", "email": "b@x.id", "password": "rahasia"})
-	eq(c, 409, "register dup")
+	eq(c, 400, "register dup")
+	c, _ = call(r, "POST", "/api/auth/register", "", M{"username": "x1", "password": "rahasia"})
+	eq(c, 400, "register tanpa email")
+	c, _ = call(r, "POST", "/api/auth/register", "", M{"username": "x1", "email": "x@x.id", "password": "12"})
+	eq(c, 400, "register password pendek")
+	c, _ = call(r, "POST", "/api/auth/register", "", M{"username": "x1", "email": "salah", "password": "rahasia"})
+	eq(c, 400, "register email salah")
+	c, _ = call(r, "POST", "/api/auth/login", "", M{"username": "b@x.id", "password": "rahasia"})
+	eq(c, 200, "login pakai email")
 	c, _ = call(r, "POST", "/api/auth/register", "", "{")
 	eq(c, 400, "register bad")
 	c, _ = call(r, "POST", "/api/auth/login", "", "{")
@@ -74,7 +86,7 @@ func TestAPI(t *testing.T) {
 	c, _ = call(r, "PUT", "/api/auth/profile", tb, "{")
 	eq(c, 400, "profile bad")
 	c, _ = call(r, "PUT", "/api/auth/profile", tb, M{"username": "admin", "email": "b@x.id"})
-	eq(c, 409, "profile conflict")
+	eq(c, 400, "profile conflict")
 	c, _ = call(r, "POST", "/api/auth/logout", tb, nil)
 	eq(c, 200, "logout")
 	c, _ = call(r, "GET", "/api/posts", "", nil)
@@ -82,7 +94,7 @@ func TestAPI(t *testing.T) {
 	// posts
 	c, _ = call(r, "POST", "/api/posts", tb, M{})
 	eq(c, 400, "post bad")
-	c, o := call(r, "POST", "/api/posts", tb, M{"title": "Halo Dunia", "content": "isi", "is_published": true})
+	c, o = call(r, "POST", "/api/posts", tb, M{"title": "Halo Dunia", "content": "isi", "is_published": true})
 	eq(c, 201, "post create")
 	id := "/api/posts/" + json.Number(strings.TrimSuffix(strings.TrimSpace(
 		string(mustJSON(o["data"].(M)["id"]))), ".0")).String()
@@ -90,8 +102,26 @@ func TestAPI(t *testing.T) {
 	eq(c, 201, "slug unik")
 	c, _ = call(r, "GET", "/api/posts", tb, nil)
 	eq(c, 200, "mine")
-	c, _ = call(r, "GET", "/api/posts/stats", tb, nil)
+	c, o = call(r, "GET", "/api/posts/stats", tb, nil)
 	eq(c, 200, "stats")
+	if d, _ := o["data"].(M); d["total_articles"] != float64(2) || d["total_selesai"] != float64(1) || d["belum_selesai"] != float64(1) {
+		t.Fatal("stats salah:", o["data"])
+	}
+	c, _ = call(r, "GET", "/api/posts/abc", tb, nil)
+	eq(c, 400, "id bukan angka")
+	c, _ = call(r, "GET", "/api/posts/1", "", nil)
+	eq(c, 401, "get tanpa token")
+	c, o2 := call(r, "POST", "/api/posts", ta, M{"title": "Milik Admin", "content": "isi"})
+	eq(c, 201, "post admin")
+	ida := "/api/posts/" + strconv.Itoa(int(o2["data"].(M)["id"].(float64)))
+	c, _ = call(r, "GET", ida, tb, nil)
+	eq(c, 403, "get milik orang lain")
+	c, _ = call(r, "PUT", ida, tb, M{"title": "x", "content": "y"})
+	eq(c, 403, "put milik orang lain")
+	c, _ = call(r, "PATCH", ida, tb, M{"title": "x"})
+	eq(c, 403, "patch milik orang lain")
+	c, _ = call(r, "DELETE", ida, tb, nil)
+	eq(c, 403, "delete milik orang lain")
 	c, _ = call(r, "GET", id, tb, nil)
 	eq(c, 200, "get")
 	c, _ = call(r, "GET", "/api/posts/999", tb, nil)
@@ -113,6 +143,20 @@ func TestAPI(t *testing.T) {
 	eq(c, 200, "categories")
 	c, _ = call(r, "GET", "/api/public/posts?q=halo&category=Umum", "", nil)
 	eq(c, 200, "public list")
+	c, o = call(r, "GET", "/api/public/posts", "", nil)
+	eq(c, 200, "public list semua")
+	arr, _ := o["data"].([]any)
+	if len(arr) == 0 {
+		t.Fatal("public list harus array berisi")
+	}
+	for _, k := range []string{"user_id", "is_published"} {
+		if _, ada := arr[0].(M)[k]; ada {
+			t.Fatal("data internal bocor:", k)
+		}
+	}
+	if au, _ := arr[0].(M)["author"].(M); au["email"] != nil || au["role"] != nil {
+		t.Fatal("email/role penulis bocor")
+	}
 	c, _ = call(r, "GET", "/api/public/posts/judul-baru", "", nil)
 	eq(c, 200, "public detail")
 	c, _ = call(r, "GET", "/api/public/posts/tidak-ada", "", nil)
@@ -124,6 +168,15 @@ func TestAPI(t *testing.T) {
 		c, _ = call(r, "GET", p, ta, nil)
 		eq(c, 200, p)
 	}
+	c, o = call(r, "GET", "/api/admin/users/9999/posts", ta, nil)
+	eq(c, 200, "admin posts user tidak ada")
+	if l, ok := o["data"].([]any); !ok || len(l) != 0 {
+		t.Fatal("harus daftar kosong []")
+	}
+	c, _ = call(r, "GET", "/api/admin/users/abc/posts", ta, nil)
+	eq(c, 400, "admin id bukan angka")
+	c, _ = call(r, "GET", "/api/admin/posts", "", nil)
+	eq(c, 401, "admin tanpa token")
 	// ai tanpa topik, swagger, 404, cors
 	c, _ = call(r, "POST", "/api/posts/ai-generate", tb, M{})
 	eq(c, 400, "ai bad")
@@ -139,6 +192,10 @@ func TestAPI(t *testing.T) {
 	eq(c, 200, "delete")
 	c, _ = call(r, "DELETE", id, tb, nil)
 	eq(c, 404, "delete 404")
+	c, o = call(r, "GET", "/api/posts/stats", tb, nil)
+	if d, _ := o["data"].(M); d["total_articles"] != float64(1) {
+		t.Fatal("stats harus berkurang setelah delete:", o["data"])
+	}
 }
 
 func mustJSON(v any) []byte { b, _ := json.Marshal(v); return b }

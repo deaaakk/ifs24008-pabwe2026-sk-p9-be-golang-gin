@@ -97,6 +97,7 @@ func TestPostFlow(t *testing.T) {
 		{"PUT", "/p/1", `{"title":"Judul Baru","content":"x","is_published":true}`, 200},
 		{"PUT", "/p/1", `{"title":"Judul Baru","content":"x"}`, 200},
 		{"PATCH", "/p/1/t", "", 200},
+		{"PATCH", "/p/1/t", "", 200},
 		{"PATCH", "/p/99/t", "", 404},
 		{"GET", "/pub", "", 200},
 		{"GET", "/pub?q=judul&category=Umum", "", 200},
@@ -109,6 +110,24 @@ func TestPostFlow(t *testing.T) {
 	fail = true
 	run(t, r, []tc{{"PUT", "/p/1", `{"title":"Judul Baru","content":"x"}`, 500}})
 	fail = false
+	run(t, r, []tc{
+		{"GET", "/p/abc", "", 400},
+		{"PUT", "/p/abc", `{}`, 400},
+		{"DELETE", "/p/abc", "", 400},
+		{"GET", "/ap/abc", "", 400},
+		{"GET", "/ap/9999", "", 200},
+		{"PUT", "/p/1", `{"title":"  "}`, 400},
+		{"PUT", "/p/1", `{"excerpt":"ringkas"}`, 200},
+	})
+	other := database.Post{UserID: 1, Title: "Milik Admin", Slug: "milik-admin", Content: "c"}
+	db.Create(&other)
+	op := "/p/" + strconv.Itoa(int(other.ID))
+	run(t, r, []tc{
+		{"GET", op, "", 403},
+		{"PUT", op, `{"title":"x","content":"y"}`, 403},
+		{"PATCH", op + "/t", "", 403},
+		{"DELETE", op, "", 403},
+	})
 	run(t, r, []tc{{"DELETE", "/p/1", "", 200}, {"DELETE", "/p/1", "", 404}})
 }
 
